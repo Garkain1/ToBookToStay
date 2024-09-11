@@ -1,0 +1,80 @@
+# Python
+*.py[cod]
+__pycache__/
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Django
+data/
+db.sqlite3
+*.log
+staticfiles/
+media/
+*.pot
+*.pyc
+*.pyo
+*.pyd
+
+# MacOS
+.DS_Store
+
+# Pycharm/IDEA
+.idea/
+*.iml
+*.iws
+.idea/workspace.xml
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env/
+ENV/
+
+# Docker
+*.log
+*.pid
+*.lock
+*.env
+db_data/
+docker-compose.override.yml
+docker-compose.override.yaml
+
+# Migrations
+**/migrations/*.pyc
+**/migrations/*.log
+**/migrations/__pycache__/
+
+# Byte-compiled / optimized / DLL files
+*.py[cod]
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# pyenv
+.python-version
+
+# Logs and temp files
+*.log
+*.swp
+*.swo
+*.~undo-tree~
+*.un~
+.*.s[a-v][a-z]
