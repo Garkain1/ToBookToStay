@@ -332,6 +332,40 @@ docker-compose down
 
 ---
 
+## Локализация docstring'ов
+
+Проект поддерживает локализацию docstring'ов для функций и модулей. Используйте декоратор `localized_docstring`, чтобы настроить docstring'и на разных языках.
+
+### Пример использования:
+
+```python
+from common.utils.localized_docs import localized_docstring
+
+@localized_docstring({
+    'en': "This function handles listing operations.",
+    'ru': "Эта функция обрабатывает операции с объявлениями."
+})
+def some_listing_function():
+    pass
+```
+```bash
+python
+>>>from some.path.to.module import some_listing_function
+>>>print(some_listing_function.__doc__)
+>>>exit()
+```
+Смена языка в файле `doc_config.py` в переменной `doc_language`.
+
+### Тестирование
+
+Локализация docstring'ов покрыта unit-тестом, который находятся в директории `common/tests/`. Чтобы запустить тест, выполните команду:
+
+```bash
+python -m unittest common/tests/test_localized_docs.py
+```
+
+---
+
 ## Авторы
 
 Проект разработан **Sergei Oskolkov**
