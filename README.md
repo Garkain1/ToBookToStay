@@ -65,6 +65,7 @@ DB_ROOT_PASSWORD=your_secure_password_here
 AWS_ACCESS_KEY_ID=your_aws_access_key
 AWS_SECRET_ACCESS_KEY=your_aws_secret_key
 AWS_STORAGE_BUCKET_NAME=your_bucket_name
+AWS_REGION=your-aws-region
 
 ALLOWED_HOSTS=127.0.0.1,localhost
 
@@ -199,6 +200,128 @@ python manage.py createsuperuser
 #### 8. Остановка сервера
 
 Для остановки сервера нажмите `Ctrl + C` в терминале, где запущен сервер разработки.
+
+## Установка и запуск проекта на AWS
+
+Проект **ToBookToStay** можно развернуть на AWS, используя Docker Compose. Это позволит вам быстро развернуть проект с минимальной настройкой окружения на EC2 экземпляре.
+
+#### 1. Настройка EC2
+
+Начните с развертывания EC2 экземпляра в AWS (например, Amazon Linux 2). На этом этапе вам нужно будет выполнить следующие шаги:
+
+- **Настроить ключи доступа SSH** для подключения к вашему серверу.
+- **Открыть порты** 22 (SSH), 80 (HTTP), 443 (HTTPS), и 8000 (для приложения Django) в Security Group для доступа извне.
+- **(Опционально) Назначить IAM роль** вашему EC2 экземпляру для доступа к S3 и другим AWS сервисам без необходимости указания ключей доступа напрямую.
+
+После настройки EC2, вы можете подключиться к вашему серверу по SSH и приступить к установке необходимых инструментов.
+
+#### 2. Установка необходимых инструментов
+
+Подключитесь к вашему EC2 экземпляру по SSH и выполните следующие команды для установки Git, Docker и Docker Compose:
+
+```
+# Обновление системы
+sudo yum update -y
+
+# Установка Git
+sudo yum install git -y
+git --version
+
+# Установка Docker
+sudo yum install docker -y
+sudo systemctl start docker
+sudo systemctl enable docker
+docker --version
+
+# Установка Docker Compose
+sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+docker-compose --version
+```
+
+#### 3. Клонирование репозитория
+
+Клонируйте репозиторий проекта на ваш EC2 сервер:
+
+```bash
+git clone https://github.com/ваш-репозиторий/ToBookToStay.git
+cd ToBookToStay
+```
+
+#### 4. Настройка переменных окружения
+
+В корне проекта есть файл `.env.example`. Создайте файл `.env` на основе этого примера и заполните его значениями, которые соответствуют вашему окружению:
+
+```bash
+cp .env.example .env
+```
+
+Пример содержимого `.env` для AWS:
+
+```bash
+SECRET_KEY=your_django_secret_key_here
+
+DEBUG=True
+
+DB_NAME=to_book_to_stay_db
+DB_USER=db_user
+DB_PASSWORD=db_password
+DB_HOST=db
+DB_PORT=3306
+
+DB_ROOT_PASSWORD=your_secure_password_here
+
+AWS_ACCESS_KEY_ID=your_aws_access_key
+AWS_SECRET_ACCESS_KEY=your_aws_secret_key
+AWS_STORAGE_BUCKET_NAME=your_bucket_name
+AWS_REGION=your-aws-region
+
+ALLOWED_HOSTS=127.0.0.1,localhost,your-ec2-public-ip
+
+MYSQL_PORT=3306
+DJANGO_PORT=8000
+```
+
+1. **AWS_ACCESS_KEY_ID** и **AWS_SECRET_ACCESS_KEY** — это ваши ключи доступа AWS (если вы не настроили IAM роль).
+2. **AWS_STORAGE_BUCKET_NAME** — имя вашего S3 бакета для хранения медиафайлов.
+3. **AWS_REGION** — регион вашего S3 бакета (например, `eu-central-1` для Франкфурта).
+4. **ALLOWED_HOSTS** — обязательно добавьте публичный IP-адрес вашего EC2 экземпляра, чтобы разрешить доступ к приложению через этот IP.
+
+#### 5. Запуск приложения через Docker Compose
+
+После настройки переменных окружения, вы можете запустить проект с помощью Docker Compose. Это автоматически запустит как Django-приложение, так и базу данных MySQL.
+
+```bash
+docker-compose up --build -d
+```
+
+Docker Compose соберет образ для вашего Django-приложения и запустит его вместе с контейнером базы данных MySQL. Приложение будет доступно по адресу:
+
+```
+http://your-ec2-public-ip:8000
+```
+
+#### 6. Создание суперпользователя
+
+Чтобы создать суперпользователя для доступа к административной панели Django, выполните команду:
+
+```bash
+docker-compose exec web python manage.py createsuperuser
+```
+
+Следуйте инструкциям, чтобы создать учетную запись суперпользователя.
+
+#### 7. Остановка контейнеров
+
+Если вам нужно остановить проект, выполните следующую команду:
+
+```bash
+docker-compose down
+```
+
+Эта команда остановит все контейнеры и удалит созданные ресурсы.
+
+---
 
 ## Используемые технологии
 
