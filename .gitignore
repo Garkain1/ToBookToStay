@@ -45,9 +45,8 @@ docker-compose.override.yml
 docker-compose.override.yaml
 
 # Migrations
-**/migrations/*.pyc
-**/migrations/*.log
-**/migrations/__pycache__/
+**/migrations/*
+!**/migrations/__init__.py
 
 # Byte-compiled / optimized / DLL files
 *.py[cod]
