@@ -8,3 +8,9 @@ class UserStatusChoices(models.TextChoices):
     ACTIVE = '1', 'Active'
     DEACTIVATED = '2', 'Deactivated'
     DELETED = '3', 'Deleted'
+
+
+class UserStatusColors(models.TextChoices):
+    ORANGE = '0', 'orange'
+    GREEN = '1', 'green'
+    RED = '2', 'red'
