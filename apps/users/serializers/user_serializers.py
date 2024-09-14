@@ -63,6 +63,8 @@ class UpdateUserSerializer(serializers.ModelSerializer):
 
 
 class UserDetailSerializer(serializers.ModelSerializer):
+    status = serializers.CharField(source='get_status_display', read_only=True)
+
     class Meta:
         model = User
         fields = [
@@ -70,6 +72,9 @@ class UserDetailSerializer(serializers.ModelSerializer):
             'status', 'status_changed_at', 'created_at', 'last_login', 'is_staff'
         ]
         read_only_fields = ['id', 'status', 'status_changed_at', 'created_at', 'last_login', 'is_staff']
+
+    def get_status(self, obj):
+        return obj.get_status_display()
 
     def to_representation(self, instance):
         """Customize fields based on user permissions."""
@@ -154,29 +159,34 @@ class UserListSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'username', 'email', 'status']
 
+    def get_status(self, obj):
+        return obj.get_status_display()
+
 
 class ActivateUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['status']  # Будем изменять только статус
+        fields = ['status']
 
     def validate(self, data):
-        request = self.context.get('request')  # Получаем пользователя из контекста запроса
+        request = self.context.get('request')
 
-        # Если аккаунт уже активен
+        # Если аккаунт уже активен, выбрасываем ошибку
         if self.instance.status == UserStatusChoices.ACTIVE:
             raise ValidationError("This account is already active.")
 
-        # Если текущий пользователь - не администратор
-        if not request.user.is_staff:
-            # Разрешаем активацию только для статусов 'PENDING' или 'DEACTIVATED'
-            if self.instance.status not in [UserStatusChoices.PENDING, UserStatusChoices.DEACTIVATED]:
-                raise ValidationError("You can only activate an account with 'pending' or 'deactivated' status.")
+        # Если пользователь - администратор, разрешаем изменение статуса без дальнейших проверок
+        if request.user.is_staff:
+            return data
+
+        # Логика для обычного пользователя: не позволяем активировать "DELETED"
+        if self.instance.status == UserStatusChoices.DELETED:
+            raise ValidationError("You cannot activate a deleted account.")
 
         return data
 
     def update(self, instance, validated_data):
-        # Устанавливаем статус "active"
+        # Устанавливаем статус "ACTIVE"
         instance.status = UserStatusChoices.ACTIVE
         instance.save()
         return instance
