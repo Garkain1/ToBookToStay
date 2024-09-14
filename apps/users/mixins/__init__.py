@@ -1,2 +1,2 @@
 from .password_mixin import PasswordMixin
-from .status_mixin import StatusMixin, SoftDeleteMixin
+from .status_mixins import StatusMixin, SoftDeleteMixin
