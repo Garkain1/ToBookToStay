@@ -24,6 +24,26 @@ class UserSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['status_changed_at', 'last_login', 'created_at']
 
+    def to_representation(self, instance):
+        """Customizes which fields are returned in the serialized data based on the user's permissions."""
+        representation = super().to_representation(instance)
+        request = self.context.get('request')
+
+        # Hide 'is_staff' and 'status' for non-staff users
+        if request and not request.user.is_staff:
+            representation.pop('is_staff', None)
+            representation.pop('status', None)
+            representation.pop('status_changed_at', None)
+            representation.pop('created_at', None)
+            representation.pop('groups', None)
+            representation.pop('user_permissions', None)
+            representation.pop('last_login', None)
+
+        if request and request.user != instance and not request.user.is_staff:
+            representation.pop('is_business_account', None)
+
+        return representation
+
     def validate_username(self, value):
         if len(value) < 3:
             raise serializers.ValidationError("Username must be at least 3 characters long.")
