@@ -32,7 +32,7 @@ class CreateUserView(generics.CreateAPIView):
 
 
 class UserListView(generics.ListAPIView):
-    queryset = User.objects.all()
+    queryset = User.objects.all().order_by('email')
     serializer_class = UserListSerializer
     permission_classes = [permissions.IsAdminUser]
 
@@ -43,19 +43,31 @@ class UserDetailView(generics.RetrieveAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):
-        # Получаем объект пользователя
         obj = super().get_object()
-        current_user = self.request.user
 
-        if obj.status == UserStatusChoices.DELETED and not current_user.is_staff:
-            raise NotFound("This account does not exist.")
+        # Если пользователь - администратор, он может просматривать любые профили, независимо от статуса
+        if self.request.user.is_staff:
+            return obj
 
-        if current_user.status in [UserStatusChoices.DEACTIVATED, UserStatusChoices.PENDING]:
-            if current_user != obj:
-                raise PermissionDenied("You do not have permission to view other users' information.")
+        # Если профиль, к которому пытается получить доступ пользователь, имеет статус DELETED
+        if obj.status == UserStatusChoices.DELETED:
+            # Профили со статусом DELETED возвращают 404 для всех, кроме администратора
+            raise NotFound("The profile you are looking for does not exist.")
 
-        if obj.status in [UserStatusChoices.DEACTIVATED, UserStatusChoices.PENDING] and current_user != obj:
-            raise PermissionDenied("You do not have permission to view this user's information.")
+        # Проверяем, запрашивает ли пользователь свой собственный профиль
+        if self.request.user == obj:
+            # Пользователь со статусами PENDING и DEACTIVATED может видеть свой собственный профиль
+            if obj.status in [UserStatusChoices.PENDING, UserStatusChoices.DEACTIVATED]:
+                return obj
+            return obj
+
+        # Обычные пользователи не могут видеть профили со статусами PENDING, DEACTIVATED
+        if obj.status in [UserStatusChoices.PENDING, UserStatusChoices.DEACTIVATED]:
+            raise PermissionDenied("You do not have permission to access this profile.")
+
+        # Если пользователь имеет статус DELETED, он не может просматривать чужие профили
+        if self.request.user.status == UserStatusChoices.DELETED:
+            raise PermissionDenied("Deleted users cannot access other profiles.")
 
         return obj
 

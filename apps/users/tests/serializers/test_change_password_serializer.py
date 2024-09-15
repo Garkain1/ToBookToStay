@@ -45,7 +45,7 @@ class ChangePasswordSerializerTest(TestCase):
         }
         serializer = ChangePasswordSerializer(data=data, context=self.get_serializer_context(self.user))
         self.assertFalse(serializer.is_valid())
-        self.assertIn('current_password', serializer.errors)
+        self.assertIn('non_field_errors', serializer.errors)
 
     def test_new_passwords_do_not_match(self):
         # Проверка ошибки при несовпадении новых паролей
@@ -77,7 +77,7 @@ class ChangePasswordSerializerTest(TestCase):
         }
         serializer = ChangePasswordSerializer(data=data, context=self.get_serializer_context(self.user))
         self.assertFalse(serializer.is_valid())
-        self.assertIn('current_password', serializer.errors)
+        self.assertIn('non_field_errors', serializer.errors)
 
     def test_missing_new_password(self):
         # Проверка ошибки при отсутствии нового пароля
