@@ -1,6 +1,9 @@
 from decimal import Decimal
 from rest_framework import serializers
+from django.contrib.auth import get_user_model
 from ..models import Listing
+
+User = get_user_model()
 
 
 class ListingListSerializer(serializers.ModelSerializer):
@@ -59,10 +62,31 @@ class ListingCreateSerializer(serializers.ModelSerializer):
         decimal_places=2,
         min_value=Decimal('0.01')
     )
+    owner = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),  # Позволяет выбрать любого пользователя
+        required=False  # Делает поле необязательным
+    )
 
     class Meta:
         model = Listing
-        fields = ['title', 'description', 'location', 'address', 'property_type', 'price', 'rooms']
+        fields = ['title', 'description', 'price', 'rooms', 'location', 'address', 'property_type', 'owner']
+
+    def validate_owner(self, value):
+        if not value.is_business_account:
+            raise serializers.ValidationError("Owner must be a business account.")
+        return value
+
+    def validate(self, data):
+        user = self.context['request'].user
+
+        # Если пользователь не администратор, игнорируем поле 'owner' и устанавливаем текущего пользователя
+        if not user.is_staff:
+            data['owner'] = user
+        elif 'owner' not in data:
+            # Если администратор не указал 'owner', устанавливаем текущего пользователя
+            data['owner'] = user
+
+        return data
 
 
 class ListingUpdateSerializer(serializers.ModelSerializer):
@@ -93,7 +117,7 @@ class ListingStatusActionSerializer(serializers.ModelSerializer):
         read_only_fields = ['status_changed_at', 'created_at', 'updated_at', 'owner']
 
     def update(self, instance, validated_data):
-        action = validated_data.get('action')
+        action = self.context.get('view').action
 
         if action == 'activate':
             instance.activate()

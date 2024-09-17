@@ -56,8 +56,7 @@ class Listing(models.Model):
         self._change_status(ListingStatusChoices.ACTIVE)
 
     def deactivate(self):
-        if self.status != ListingStatusChoices.DELETED:
-            self._change_status(ListingStatusChoices.DEACTIVATED)
+        self._change_status(ListingStatusChoices.DEACTIVATED)
 
     def _change_status(self, new_status):
         if self.status != new_status:
