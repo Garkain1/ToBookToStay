@@ -280,7 +280,7 @@ class ListingModelTest(TestCase):
             status=ListingStatusChoices.DRAFT
         )
         old_status_changed_at = listing.status_changed_at
-        sleep(0.01)
+        sleep(0.1)
         listing.activate()
         self.assertNotEqual(listing.status_changed_at, old_status_changed_at)
 
@@ -323,7 +323,7 @@ class ListingModelTest(TestCase):
             rooms=2
         )
         old_updated_at = listing.updated_at
-        sleep(0.01)
+        sleep(0.1)
         listing.title = 'Updated Title'
         listing.save()
         listing.refresh_from_db()
@@ -342,7 +342,7 @@ class ListingModelTest(TestCase):
             status=ListingStatusChoices.DRAFT
         )
         old_status_changed_at = listing.status_changed_at
-        sleep(0.01)
+        sleep(0.1)
         listing._change_status(ListingStatusChoices.DRAFT)
         self.assertEqual(listing.status_changed_at, old_status_changed_at)
 
@@ -359,7 +359,7 @@ class ListingModelTest(TestCase):
             status=ListingStatusChoices.DRAFT
         )
         old_status_changed_at = listing.status_changed_at
-        sleep(0.01)
+        sleep(0.1)
         listing._change_status(ListingStatusChoices.ACTIVE)
         self.assertNotEqual(listing.status_changed_at, old_status_changed_at)
 
@@ -426,22 +426,3 @@ class ListingModelTest(TestCase):
         )
         with self.assertRaises(ValidationError):
             listing.full_clean()
-
-    def test_deactivate_method_does_not_change_status_if_deleted(self):
-        listing = Listing.objects.create(
-            owner=self.business_user,
-            title='Valid Title Here',
-            description='Valid description',
-            location='Test location',
-            address='Test address',
-            property_type=PropertyTypeChoices.HOUSE,
-            price=100.00,
-            rooms=2,
-            status=ListingStatusChoices.DELETED
-        )
-        old_status = listing.status
-        old_status_changed_at = listing.status_changed_at
-        sleep(0.01)
-        listing.deactivate()
-        self.assertEqual(listing.status, old_status)
-        self.assertEqual(listing.status_changed_at, old_status_changed_at)

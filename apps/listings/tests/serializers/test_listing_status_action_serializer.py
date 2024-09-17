@@ -1,4 +1,6 @@
 from django.test import TestCase
+from rest_framework.views import APIView
+from unittest.mock import Mock
 from django.contrib.auth import get_user_model
 from rest_framework.exceptions import ValidationError
 from apps.listings.models import Listing
@@ -34,7 +36,10 @@ class TestListingStatusActionSerializer(TestCase):
         self.assertIn('soft_delete', choices)
 
     def test_activate_action(self):
-        serializer = ListingStatusActionSerializer(self.listing, data={'action': 'activate'})
+        mock_view = Mock(spec=APIView)
+        mock_view.action = 'activate'
+        serializer = ListingStatusActionSerializer(self.listing, data={'action': 'activate'},
+                                                   context={'view': mock_view})
         serializer.is_valid(raise_exception=True)
         updated_listing = serializer.save()
         self.assertEqual(updated_listing.status, ListingStatusChoices.ACTIVE)
@@ -43,18 +48,27 @@ class TestListingStatusActionSerializer(TestCase):
         self.listing.status = ListingStatusChoices.ACTIVE
         self.listing.save()
 
-        serializer = ListingStatusActionSerializer(self.listing, data={'action': 'deactivate'})
+        mock_view = Mock(spec=APIView)
+        mock_view.action = 'deactivate'
+        serializer = ListingStatusActionSerializer(self.listing, data={'action': 'deactivate'},
+                                                   context={'view': mock_view})
         serializer.is_valid(raise_exception=True)
         updated_listing = serializer.save()
         self.assertEqual(updated_listing.status, ListingStatusChoices.DEACTIVATED)
 
     def test_soft_delete_action(self):
-        serializer = ListingStatusActionSerializer(self.listing, data={'action': 'soft_delete'})
+        mock_view = Mock(spec=APIView)
+        mock_view.action = 'soft_delete'
+        serializer = ListingStatusActionSerializer(self.listing, data={'action': 'soft_delete'},
+                                                   context={'view': mock_view})
         serializer.is_valid(raise_exception=True)
         updated_listing = serializer.save()
         self.assertEqual(updated_listing.status, ListingStatusChoices.DELETED)
 
     def test_invalid_action(self):
-        serializer = ListingStatusActionSerializer(self.listing, data={'action': 'invalid_action'})
+        mock_view = Mock(spec=APIView)
+        mock_view.action = 'invalid_action'
+        serializer = ListingStatusActionSerializer(self.listing, data={'action': 'invalid_action'},
+                                                   context={'view': mock_view})
         with self.assertRaises(ValidationError):
             serializer.is_valid(raise_exception=True)

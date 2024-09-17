@@ -1,3 +1,4 @@
+from time import sleep
 from django.test import TestCase
 from django.utils import timezone
 from apps.users.models import User
@@ -102,6 +103,7 @@ class UserModelAdditionalTest(TestCase):
     def test_status_changed_at_auto_update(self):
         # Проверяем, что поле status_changed_at обновляется при изменении статуса
         old_status_changed_at = self.user.status_changed_at
+        sleep(0.1)
         self.user.status = UserStatusChoices.ACTIVE
         self.user.save()
 
