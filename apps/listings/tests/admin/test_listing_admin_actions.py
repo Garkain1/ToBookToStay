@@ -1,11 +1,6 @@
 from django.test import TestCase
-from django.contrib.admin.sites import AdminSite
-from django.utils.html import strip_tags
 from django.urls import reverse
-from apps.listings.admin import ListingAdmin
-from apps.listings.forms import ListingAdminForm
 from apps.listings.models import Listing
-from apps.listings.mixins import StatusMixin, SoftDeleteMixin
 from apps.listings.choices import ListingStatusChoices
 from apps.users.models import User
 
