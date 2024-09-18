@@ -65,7 +65,6 @@ class TestListingUpdateSerializer(TestCase):
         updated_listing = serializer.save()
         self.assertEqual(updated_listing.title, 'Initial Title')  # Убедимся, что объект остался неизменным
 
-
     def test_update_existing_object(self):
         update_data = {'title': 'Updated Title'}
         serializer = ListingUpdateSerializer(self.listing, data=update_data, partial=True)
