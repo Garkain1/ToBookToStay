@@ -1,1 +1,1 @@
-from .booking_status import BookingStatusChoices
+from .booking_status import BookingStatusChoices, BookingStatusColors

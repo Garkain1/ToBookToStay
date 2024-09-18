@@ -8,3 +8,11 @@ class BookingStatusChoices(models.IntegerChoices):
     COMPLETED = 4, 'Completed'
     CANCELED = 5, 'Canceled'
     DELETED = 6, 'Deleted'
+
+
+class BookingStatusColors(models.IntegerChoices):
+    YELLOW = 1, 'yellow'
+    BLUE = 2, 'blue'
+    GREEN = 3, 'green'
+    GRAY = 4, 'gray'
+    RED = 5, 'red'
