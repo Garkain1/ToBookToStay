@@ -1,7 +1,10 @@
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
+from datetime import timedelta
 from django.core.validators import MinValueValidator, MinLengthValidator
 from ..choices import ListingStatusChoices, PropertyTypeChoices
+from apps.bookings.choices import BookingStatusChoices
 
 
 class Listing(models.Model):
@@ -29,7 +32,7 @@ class Listing(models.Model):
         validators=[MinValueValidator(0.01)]
     )
     rooms = models.PositiveIntegerField(validators=[MinValueValidator(1)])
-    status = models.IntegerField(
+    status = models.PositiveSmallIntegerField(
         choices=ListingStatusChoices.choices,
         default=ListingStatusChoices.DRAFT,
         db_index=True
@@ -62,3 +65,23 @@ class Listing(models.Model):
         if self.status != new_status:
             self.status = new_status
             self.save()
+
+    def is_available(self, start_date, end_date, exclude_booking_id=None):
+        if start_date >= end_date:
+            return False
+
+        max_booking_date = timezone.now().date() + timedelta(days=90)
+        if end_date > max_booking_date:
+            return False
+
+        # Оптимизированный запрос: выбираем только нужные данные
+        overlapping_bookings = self.bookings.filter(
+            status__in=[BookingStatusChoices.CONFIRMED, BookingStatusChoices.REQUEST],
+            start_date__lt=end_date,
+            end_date__gt=start_date,
+        ).only('id')
+
+        if exclude_booking_id:
+            overlapping_bookings = overlapping_bookings.exclude(pk=exclude_booking_id)
+
+        return not overlapping_bookings.exists()
