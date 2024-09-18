@@ -7,12 +7,14 @@ from .views import (
     MyListingsView,
     ListingActivateView,
     ListingDeactivateView,
-    ListingSoftDeleteView
+    ListingSoftDeleteView,
+    AvailableDatesByMonthView
 )
 
 urlpatterns = [
     path('listings/', ListingListView.as_view(), name='listing-list'),
     path('listings/<int:id>/', ListingDetailView.as_view(), name='listing-detail'),
+    path('listings/<int:listing_id>/available-dates/', AvailableDatesByMonthView.as_view(), name='available-dates-by-month'),
     path('listings/create/', ListingCreateView.as_view(), name='listing-create'),
     path('listings/<int:id>/update/', ListingUpdateView.as_view(), name='listing-update'),
     path('listings/my/', MyListingsView.as_view(), name='my-listings'),

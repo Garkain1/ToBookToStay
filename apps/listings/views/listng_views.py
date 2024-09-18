@@ -12,6 +12,9 @@ from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
 from rest_framework.exceptions import NotFound, ValidationError
+from rest_framework.views import APIView
+from ..services import get_available_dates_by_month
+from ..models import Listing
 
 User = get_user_model()
 
@@ -150,3 +153,18 @@ class ListingDeactivateView(BaseListingStatusUpdateView):
 # Вьюха для мягкого удаления объявления
 class ListingSoftDeleteView(BaseListingStatusUpdateView):
     action = 'soft_delete'
+
+
+class AvailableDatesByMonthView(APIView):
+    permission_classes = [AllowAny]
+    def get(self, request, listing_id):
+        try:
+            listing = Listing.objects.get(id=listing_id)
+        except Listing.DoesNotExist:
+            return Response({'error': 'Listing not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Получаем доступные даты по месяцам
+        available_dates_by_month = get_available_dates_by_month(listing)
+
+        # Возвращаем ответ в формате JSON
+        return Response({'available_dates_by_month': available_dates_by_month})
