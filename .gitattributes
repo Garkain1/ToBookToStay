@@ -1,1 +1,2 @@
 wait_for_db.sh text eol=lf
+database_schema_diagram.svg text eol=lf

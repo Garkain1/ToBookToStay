@@ -37,3 +37,4 @@ Thumbs.db
 *.pid.lock
 
 docker-compose.override.yml
+database_schema_diagram.svg

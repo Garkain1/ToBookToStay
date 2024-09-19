@@ -140,9 +140,45 @@ ToBookToStay/
 │   │   │   └── listing_views.py    # Основные вьюшки для управления объявлениями (создание, обновление, изменение статусов)
 │   │   ├── __init__.py
 │   │   ├── apps.py                 # Конфигурация приложения listings
-│   │   ├── urls.py                 # Общая URL-конфигурация приложения listings
-│   │   └── routers.py              # (Предполагается) Настройка роутеров для вьюшек приложения
+│   │   └── urls.py                 # Общая URL-конфигурация приложения listings
 │   │
+│   ├── reviews/                             # Приложение для управления отзывами на платформе
+│   │   │
+│   │   ├── actions/                         
+│   │   │   ├── __init__.py
+│   │   │   └── review_admin.py              # Действия админа для управления отзывами
+│   │   ├── admin/
+│   │   │   ├── __init__.py
+│   │   │   └── review_admin.py              # Кастомизация админ-панели для отзывов
+│   │   ├── choices/
+│   │   │   ├── __init__.py
+│   │   │   └── review_status.py             # Определение статусов отзывов (e.g., VISIBLE, SHADOW_BANNED)
+│   │   ├── forms/
+│   │   │   ├── __init__.py
+│   │   │   └── review_admin_form.py         # Формы для администрирования отзывов
+│   │   ├── migrations/                      # Миграции базы данных для приложения reviews
+│   │   │   └── __init__.py
+│   │   ├── mixins/
+│   │   │   ├── __init__.py
+│   │   │   └── status_mixins.py             # Миксины для управления статусами отзывов
+│   │   ├── models/
+│   │   │   ├── __init__.py
+│   │   │   └── review.py                    # Модель данных для отзывов
+│   │   ├── permissions/
+│   │   │   ├── __init__.py
+│   │   │   └── owner_permissions.py         # Кастомные разрешения для управления отзывами (например, для авторов отзывов и администраторов)
+│   │   ├── serializers/
+│   │   │   ├── __init__.py
+│   │   │   └── review_serializers.py        # Сериализаторы для создания, обновления, просмотра и изменения статусов отзывов
+│   │   ├── tests/                           # Тесты для приложения reviews
+│   │   │   └── __init__.py
+│   │   ├── views/
+│   │   │   ├── __init__.py
+│   │   │   └── review_views.py              # Основные вьюшки для работы с отзывами (создание, просмотр, изменение)
+│   │   ├── __init__.py
+│   │   ├── apps.py                          # Конфигурация приложения reviews
+│   │   └── urls.py                          # URL-конфигурация для приложения отзывов
+│   │   
 │   ├── users/                       # Приложение для управления пользователями
 │   │   ├── actions/
 │   │   │   ├── __init__.py
@@ -246,6 +282,7 @@ ToBookToStay/
 ├── .env.example                    # Пример файла переменных окружения
 ├── .gitattributes                  # Управление атрибутами файлов в Git
 ├── .gitignore                      # Список файлов и папок, игнорируемых в репозитории Git
+├── database_schema_diagram.svg     # ER-диаграмма базы данных проекта
 ├── docker-compose.yml              # Конфигурация Docker Compose для запуска проекта
 ├── Dockerfile                      # Инструкция по созданию Docker-образа для приложения
 ├── manage.py                       # Главный скрипт управления проектом Django
@@ -429,6 +466,185 @@ python manage.py test apps.bookings.tests
 - **Django** – фреймворк для веб-приложений.
 - **Django REST Framework** – для реализации API.
 - **Simple JWT** – для аутентификации с использованием токенов.
+
+---
+
+### Приложение `reviews`
+
+Приложение **`reviews`** отвечает за управление отзывами пользователей о недвижимости. Оно предоставляет функционал для создания, просмотра, обновления и удаления отзывов, а также изменения их статусов, таких как "скрытый бан" или мягкое удаление.
+
+### Основные возможности приложения `reviews`:
+
+- **Создание отзывов** – пользователи могут оставлять отзывы к листингам, которые они арендовали, и которые имеют статус "активен".
+- **Просмотр отзывов** – отзывы к листингам могут просматривать все пользователи, но обычные пользователи видят только отзывы с публичным статусом, а администраторы — все.
+- **Обновление отзывов** – владельцы отзывов могут изменять свой рейтинг и комментарий, если листинг активен.
+- **Изменение статусов** – администраторы могут применять "скрытый бан", скрывая отзыв от других пользователей, либо мягко удалять отзыв, сохраняя его в базе данных.
+- **Права доступа** – встроены проверки прав доступа, позволяющие администраторам и владельцам отзывов управлять своими отзывами.
+
+### Структура приложения
+
+- **models/** – содержит модель данных `Review`, которая включает поля для рейтинга, комментария, статуса отзыва и связи с пользователем и листингом.
+- **serializers/** – сериализаторы для операций с отзывами, включая создание, обновление, просмотр и изменение статусов.
+- **views/** – API-вьюшки для управления отзывами.
+- **permissions/** – кастомные разрешения для управления отзывами.
+- **admin/** – включает в себя кастомизацию административного интерфейса для отзывов, позволяющую управлять их статусами и метаданными.
+
+### Особенности работы с приложением `reviews`
+
+- **Создание отзывов**: Отзыв можно оставить только к активному листингу и только после завершения аренды.
+- **Просмотр отзывов**: Анонимные пользователи и обычные пользователи могут видеть только публичные отзывы, а администраторы — все.
+- **Обновление и удаление**: Владельцы отзывов могут обновлять свои отзывы, если они не были удалены, и листинг активен.
+- **Права доступа**: Администраторы могут видеть и управлять всеми отзывами, а пользователи — только своими.
+
+### Тестирование
+
+Тесты приложения не реализованы.
+
+### Используемые технологии
+
+- **Django** – фреймворк для веб-приложений.
+- **Django REST Framework** – для реализации API.
+- **Simple JWT** – для аутентификации с использованием токенов.
+
+---
+
+## Структура базы данных
+
+Проект **ToBookToStay** использует реляционную базу данных для хранения информации о пользователях, листингах, бронированиях и отзывах. Основные таблицы и их поля представлены ниже.
+
+- **Таблица пользователей (`users_user`)**: содержит данные о пользователях, включая их имя, email, пароль, статус учетной записи и дату последнего изменения статуса.
+- **Таблица объявлений (`listings_listing`)**: хранит информацию о недвижимости, такой как заголовок, описание, местоположение, цена, количество комнат и статус листинга.
+- **Таблица бронирований (`bookings_booking`)**: фиксирует данные о бронированиях, включая пользователя, который забронировал, объект, дату начала и окончания бронирования, а также статус бронирования.
+- **Таблица отзывов (`reviews_review`)**: содержит отзывы пользователей, связанные с конкретными листингами, включая оценку, комментарии и статус отзыва.
+- **Таблицы для управления пользователями и правами доступа**: `auth_group`, `auth_permission`, и связанные таблицы для управления группами и разрешениями.
+
+> **Примечание**: Полная ER-диаграмма базы данных доступна в файле `database_schema_diagram.svg` в корневой директории проекта.
+
+```
+// Модель пользователя (User)
+Table users_user {
+  id int [pk, increment]  // Первичный ключ, создается автоматически
+  username varchar(50) [unique, not null, note: 'Минимум 3 символа']  // Уникальное имя пользователя
+  email varchar(100) [unique, not null]  // Уникальный email пользователя
+  password varchar(128) [not null]  // Хэшированный пароль пользователя
+  is_business_account boolean [default: false]  // Владелец бизнес-аккаунта
+  status enum('0', '1', '2', '3') [not null, default: '0']  // Статус пользователя: '0' - pending, '1' - active, '2' - deactivated, '3' - deleted
+  status_changed_at datetime [not null, default: `CURRENT_TIMESTAMP`, note: 'Автоматически обновляется при изменении записи']  // Дата последнего изменения статуса
+  is_staff boolean [default: false]  // Доступ к административной панели
+  created_at datetime [default: `CURRENT_TIMESTAMP`]  // Дата создания пользователя
+  last_login datetime  // Последний вход в систему
+
+  indexes {
+    (username)  // Индекс на имя пользователя
+    (email)  // Индекс на email
+    (status)  // Индекс на статус
+  }
+}
+
+// Таблица для групп (auth_group)
+Table auth_group {
+  id int [pk, increment]  // Первичный ключ
+  name varchar(150) [unique, not null]  // Уникальное имя группы
+}
+
+// Таблица для разрешений (auth_permission)
+Table auth_permission {
+  id int [pk, increment]  // Первичный ключ
+  name varchar(255) [not null]  // Имя разрешения
+  codename varchar(100) [unique, not null]  // Уникальный код разрешения
+  content_type_id int [not null, ref: > django_content_type.id]  // Связь с content_type
+}
+
+// Таблица для связи "многие ко многим" между User и Group (auth_user_groups)
+Table users_user_groups {
+  user_id int [ref: > users_user.id]  // Внешний ключ на пользователя
+  group_id int [ref: > auth_group.id]  // Внешний ключ на группу
+}
+
+// Таблица для связи "многие ко многим" между Group и Permission (auth_group_permissions)
+Table auth_group_permissions {
+  group_id int [ref: > auth_group.id]  // Внешний ключ на группу
+  permission_id int [ref: > auth_permission.id]  // Внешний ключ на разрешение
+}
+
+// Таблица для связи "многие ко многим" между User и Permission (auth_user_user_permissions)
+Table users_user_user_permissions {
+  user_id int [ref: > users_user.id]  // Внешний ключ на пользователя
+  permission_id int [ref: > auth_permission.id]  // Внешний ключ на разрешение
+}
+
+// Таблица для типов контента (django_content_type)
+Table django_content_type {
+  id int [pk, increment]  // Первичный ключ
+  app_label varchar(100) [not null]  // Метка приложения
+  model varchar(100) [not null]  // Имя модели
+}
+
+// Модель объявлений (Listing)
+Table listings_listing {
+    id int [pk, increment]  // Первичный ключ
+    owner_id int [not null, ref: > users_user.id]  // Внешний ключ на таблицу пользователей, должен быть бизнес-аккаунтом
+    title varchar(100) [not null, note: 'Минимальная длина: 10 символов']  // Заголовок объявления
+    description varchar(500) [not null]  // Описание объявления
+    location varchar(100) [not null]  // Местоположение объявления
+    address varchar(100) [not null]  // Адрес объявления
+    property_type enum('house', 'apartment', 'condo', 'other') [not null, default: 'other']  // Тип недвижимости
+    price decimal(10, 2) [not null, note: 'Минимальное значение: 0.01']  // Цена объявления
+    rooms int [not null, note: 'Минимальное значение: 1']  // Количество комнат
+    status enum('0', '1', '2', '3') [not null, default: '0']  // Статус объявления: 0 - Draft, 1 - Active, 2 - Deactivated, 3 - Deleted
+    status_changed_at datetime [not null, default: `CURRENT_TIMESTAMP`, note: 'Автоматически обновляется при изменении статуса']  // Дата последнего изменения статуса
+    created_at datetime [not null, default: `CURRENT_TIMESTAMP`]  // Дата создания объявления
+    updated_at datetime [not null, default: `CURRENT_TIMESTAMP`]  // Дата последнего обновления объявления
+
+    indexes {
+        (title)  // Индекс для быстрого поиска по заголовку
+        (description)  // Индекс для быстрого поиска по описанию
+        (price)  // Индекс по цене
+        (location)  // Индекс по местоположению
+        (rooms)  // Индекс по количеству комнат
+        (status, created_at)  // Составной индекс по статусу и дате создания
+    }
+}
+
+// Модель бронирования (Booking)
+Table bookings_booking {
+    id int [pk, increment]  // Первичный ключ
+    listing_id int [not null, ref: > listings_listing.id]  // Внешний ключ на таблицу объявлений
+    user_id int [not null, ref: > users_user.id]  // Внешний ключ на таблицу пользователей
+    start_date date [not null]  // Дата начала бронирования
+    end_date date [not null]  // Дата окончания бронирования
+    total_price decimal(10, 2) [not null]  // Общая стоимость бронирования
+    status enum('1', '2', '3', '4', '5', '6') [not null, default: '1']  // Статус бронирования: 1 - Pending, 2 - Request, 3 - Confirmed, 4 - Completed, 5 - Canceled, 6 - Deleted
+    status_changed_at datetime [null]  // Дата последнего изменения статуса
+    created_at datetime [not null, default: `CURRENT_TIMESTAMP`, note: 'Автоматически обновляется при создании записи']  // Дата создания бронирования
+    updated_at datetime [not null, default: `CURRENT_TIMESTAMP`]  // Дата последнего обновления бронирования
+
+    indexes {
+        (listing_id, start_date, end_date, status)  // Составной индекс для оптимизации запросов по полям listing, start_date, end_date и status
+    }
+}
+
+// Модель отзывов (Review)
+Table reviews_review {
+    id int [pk, increment]  // Первичный ключ
+    listing_id int [not null, ref: > listings_listing.id]  // Внешний ключ на таблицу объявлений
+    reviewer_id int [not null, ref: > users_user.id]  // Внешний ключ на таблицу пользователей
+    rating smallint [note: 'Минимальное значение: 1, Максимальное значение: 5', null]  // Рейтинг отзыва (1-5)
+    comment varchar(1000) [null]  // Комментарий к отзыву
+    status enum('1', '2', '3') [not null, default: '1']  // Статус отзыва: 1 - Visible, 2 - Shadow Banned, 3 - Deleted
+    status_changed_at datetime [not null, default: `CURRENT_TIMESTAMP`, note: 'Автоматически обновляется при изменении статуса']  // Дата последнего изменения статуса
+    created_at datetime [not null, default: `CURRENT_TIMESTAMP`]  // Дата создания отзыва
+    updated_at datetime [not null, default: `CURRENT_TIMESTAMP`]  // Дата последнего обновления отзыва
+
+    indexes {
+        (rating)  // Индекс по рейтингу
+        (created_at)  // Индекс по дате создания
+        (status)  // Индекс по статусу
+        (listing_id, status)  // Составной индекс для оптимизации запросов по объявлению и статусу
+        (listing_id, reviewer_id) [unique, name: 'unique_review_per_user_per_listing']  // Уникальное ограничение: один пользователь может оставить один отзыв на одно объявление
+    }
+}
+```
 
 ---
 
