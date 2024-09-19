@@ -12,14 +12,14 @@ from .views import (
 )
 
 urlpatterns = [
-    path('listings/', ListingListView.as_view(), name='listing-list'),
-    path('listings/<int:id>/', ListingDetailView.as_view(), name='listing-detail'),
-    path('listings/<int:listing_id>/available-dates/', AvailableDatesByMonthView.as_view(), name='available-dates-by-month'),
-    path('listings/create/', ListingCreateView.as_view(), name='listing-create'),
-    path('listings/<int:id>/update/', ListingUpdateView.as_view(), name='listing-update'),
-    path('listings/my/', MyListingsView.as_view(), name='my-listings'),
-    path('listings/my/<int:user_id>/', MyListingsView.as_view(), name='user-listings'),
-    path('listings/<int:id>/activate/', ListingActivateView.as_view(), name='listing-activate'),
-    path('listings/<int:id>/deactivate/', ListingDeactivateView.as_view(), name='listing-deactivate'),
-    path('listings/<int:id>/soft_delete/', ListingSoftDeleteView.as_view(), name='listing-soft-delete'),
+    path('', ListingListView.as_view(), name='listing-list'),
+    path('<int:id>/', ListingDetailView.as_view(), name='listing-detail'),
+    path('<int:listing_id>/available-dates/', AvailableDatesByMonthView.as_view(), name='available-dates-by-month'),
+    path('create/', ListingCreateView.as_view(), name='listing-create'),
+    path('<int:id>/update/', ListingUpdateView.as_view(), name='listing-update'),
+    path('my/', MyListingsView.as_view(), name='my-listings'),
+    path('my/<int:user_id>/', MyListingsView.as_view(), name='user-listings'),
+    path('<int:id>/activate/', ListingActivateView.as_view(), name='listing-activate'),
+    path('<int:id>/deactivate/', ListingDeactivateView.as_view(), name='listing-deactivate'),
+    path('<int:id>/soft_delete/', ListingSoftDeleteView.as_view(), name='listing-soft-delete'),
 ]
