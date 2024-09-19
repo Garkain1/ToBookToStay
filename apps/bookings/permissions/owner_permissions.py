@@ -1,4 +1,5 @@
 from rest_framework.permissions import BasePermission
+from apps.listings.models import Listing
 
 
 class IsBookingOwner(BasePermission):
@@ -16,8 +17,10 @@ class IsBookingOwner(BasePermission):
 
 class IsListingOwner(BasePermission):
     """
-    Разрешает доступ к бронированию только владельцу листинга, к которому оно относится.
+    Дает доступ к бронированиям только владельцу хотя бы одного листинга.
     """
+    def has_permission(self, request, view):
+        return request.user.is_authenticated and Listing.objects.filter(owner=request.user).exists()
 
     def has_object_permission(self, request, view, obj):
         return request.user == obj.listing.owner or request.user.is_staff

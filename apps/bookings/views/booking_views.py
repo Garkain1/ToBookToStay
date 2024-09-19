@@ -8,12 +8,12 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from django.shortcuts import get_object_or_404
 from apps.listings.models import Listing
 from django.core.exceptions import PermissionDenied
-from django.core.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError
 
 
 class OwnerListingBookingsListView(generics.ListAPIView):
     serializer_class = BookingListSerializer
-    permission_classes = [IsAuthenticated, IsListingOwner]
+    permission_classes = [IsAuthenticated, IsListingOwner | IsAdminUser]
 
     def get_queryset(self):
         user = self.request.user
@@ -24,7 +24,7 @@ class OwnerListingBookingsListView(generics.ListAPIView):
 
 class ListingBookingsListView(generics.ListAPIView):
     serializer_class = BookingListSerializer
-    permission_classes = [IsAuthenticated, IsListingOwner]
+    permission_classes = [IsAuthenticated, IsListingOwner | IsAdminUser]
 
     def get_queryset(self):
         user = self.request.user
@@ -59,10 +59,22 @@ class BookingDetailView(generics.RetrieveAPIView):
 
 class BookingCreateView(generics.CreateAPIView):
     serializer_class = BookingCreateSerializer
-    permission_classes = [IsAuthenticated, IsBookingOwner]
+    permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
-        serializer.save()
+        # Получаем listing_id из URL
+        listing_id = self.kwargs.get('listing_id')
+        listing = get_object_or_404(Listing, id=listing_id)
+
+        # Получаем пользователя из сериализатора или устанавливаем текущего пользователя
+        user = serializer.validated_data.get('user', self.request.user)
+
+        # Проверяем доступность листинга для указанных дат
+        if not listing.is_available(serializer.validated_data['start_date'], serializer.validated_data['end_date']):
+            raise ValidationError('The selected dates are not available for this listing.')
+
+        # Сохраняем бронирование с правильным пользователем и листингом
+        serializer.save(user=user, listing=listing)
 
 
 class BookingUpdateView(generics.UpdateAPIView):
@@ -109,6 +121,9 @@ class BaseBookingStatusUpdateView(generics.UpdateAPIView):
         # Проверка для запроса (request) — только из статуса PREVIEW
         if self.action == 'request' and booking.status != BookingStatusChoices.PENDING:
             raise ValidationError("Booking can only be requested from the preview status.")
+
+        if self.action == 'confirm' and booking.status != BookingStatusChoices.REQUEST:
+            raise ValidationError("Booking can only be confirmed from the request status.")
 
         serializer.save(action=self.action)
 

@@ -92,27 +92,33 @@ class BookingCreateSerializer(serializers.ModelSerializer):
         fields = ['listing', 'user', 'start_date', 'end_date']
 
     def validate(self, data):
-        user = self.context['request'].user
-        request = self.context.get('request')
+        request = self.context['request']
+        user = request.user
 
-        # Если пользователь не администратор, используем listing_id из URL
-        if not user.is_staff:
-            listing_id = self.context['view'].kwargs.get('listing_id')
-            if not listing_id:
-                raise serializers.ValidationError("Listing ID is required.")
+        # Получаем listing_id из URL и устанавливаем listing в данных
+        listing_id = self.context['view'].kwargs.get('listing_id')
+        if not listing_id:
+            raise serializers.ValidationError("Listing ID is required.")
 
-            try:
-                listing = Listing.objects.get(id=listing_id)
-            except Listing.DoesNotExist:
-                raise serializers.ValidationError("Listing not found.")
+        try:
+            listing = Listing.objects.get(id=listing_id)
+        except Listing.DoesNotExist:
+            raise serializers.ValidationError("Listing not found.")
 
-            data['listing'] = listing
-            data['user'] = user
+        # Устанавливаем listing в данных
+        data['listing'] = listing
 
         # Проверка доступности листинга для указанных дат
-        listing = data.get('listing')
         if not listing.is_available(data['start_date'], data['end_date']):
             raise serializers.ValidationError('The selected dates are not available for this listing.')
+
+        # Если пользователь не администратор, устанавливаем текущего пользователя
+        if not user.is_staff:
+            data['user'] = user
+        else:
+            # Если администратор, убедимся, что поле user присутствует
+            if 'user' not in data or not data['user']:
+                raise serializers.ValidationError("Admin must specify a user.")
 
         return data
 
