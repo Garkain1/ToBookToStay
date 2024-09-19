@@ -41,6 +41,14 @@ class TestBookingDetailView(APITestCase):
             status=BookingStatusChoices.PENDING
         )
 
+        self.deleted_booking = Booking.objects.create(
+            listing=self.listing,
+            user=self.user,
+            start_date=timezone.now() + timedelta(days=3),
+            end_date=timezone.now() + timedelta(days=4),
+            status=BookingStatusChoices.DELETED
+        )
+
     def test_unauthenticated_user_access(self):
         url = reverse('booking-detail', kwargs={'id': self.booking.id})
         response = self.client.get(url)
@@ -76,3 +84,21 @@ class TestBookingDetailView(APITestCase):
         url = reverse('booking-detail', kwargs={'id': 9999})  # Несуществующий ID
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_user_cannot_access_deleted_booking(self):
+        self.client.force_authenticate(user=self.user)
+        url = reverse('booking-detail', kwargs={'id': self.deleted_booking.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_owner_cannot_access_deleted_booking(self):
+        self.client.force_authenticate(user=self.owner)
+        url = reverse('booking-detail', kwargs={'id': self.deleted_booking.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_admin_can_access_deleted_booking(self):
+        self.client.force_authenticate(user=self.admin)
+        url = reverse('booking-detail', kwargs={'id': self.deleted_booking.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)

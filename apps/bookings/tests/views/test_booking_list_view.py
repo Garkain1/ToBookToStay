@@ -84,6 +84,36 @@ class TestOwnerListingBookingsListView(APITestCase):
         # На второй странице должно быть оставшихся 5 объектов
         self.assertEqual(len(response.data['results']), 5)
 
+        def test_owner_cannot_see_deleted_bookings(self):
+            # Создаем удаленное бронирование
+            Booking.objects.create(
+                listing=self.listing,
+                user=self.other_user,
+                start_date=timezone.now() + timedelta(days=20),
+                end_date=timezone.now() + timedelta(days=25),
+                status=BookingStatusChoices.DELETED
+            )
+            self.client.force_authenticate(user=self.owner_user)
+            response = self.client.get(reverse('owner-listing-bookings-list'))
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            # Убедитесь, что удаленное бронирование не отображается
+            self.assertEqual(response.data['count'], 15)  # Ожидается 15 активных бронирований
+
+        def test_admin_can_see_deleted_bookings(self):
+            # Создаем удаленное бронирование
+            Booking.objects.create(
+                listing=self.listing,
+                user=self.other_user,
+                start_date=timezone.now() + timedelta(days=20),
+                end_date=timezone.now() + timedelta(days=25),
+                status=BookingStatusChoices.DELETED
+            )
+            self.client.force_authenticate(user=self.admin_user)
+            response = self.client.get(reverse('owner-listing-bookings-list'))
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            # Убедитесь, что удаленное бронирование отображается
+            self.assertEqual(response.data['count'], 16)
+
 
 class TestListingBookingsListView(APITestCase):
 
@@ -149,6 +179,36 @@ class TestListingBookingsListView(APITestCase):
         response = self.client.get(reverse('listing-bookings-list', kwargs={'listing_id': self.listing.id}) + '?page=2')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['results']), 5)
+
+    def test_owner_cannot_see_deleted_bookings(self):
+        # Создаем удаленное бронирование
+        Booking.objects.create(
+            listing=self.listing,
+            user=self.regular_user,
+            start_date=timezone.now() + timedelta(days=20),
+            end_date=timezone.now() + timedelta(days=25),
+            status=BookingStatusChoices.DELETED
+        )
+        self.client.force_authenticate(user=self.owner_user)
+        response = self.client.get(reverse('listing-bookings-list', kwargs={'listing_id': self.listing.id}))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Убедитесь, что удаленное бронирование не отображается
+        self.assertEqual(response.data['count'], 15)  # Ожидается 15 активных бронирований
+
+    def test_admin_can_see_deleted_bookings(self):
+        # Создаем удаленное бронирование
+        Booking.objects.create(
+            listing=self.listing,
+            user=self.regular_user,
+            start_date=timezone.now() + timedelta(days=20),
+            end_date=timezone.now() + timedelta(days=25),
+            status=BookingStatusChoices.DELETED
+        )
+        self.client.force_authenticate(user=self.admin_user)
+        response = self.client.get(reverse('listing-bookings-list', kwargs={'listing_id': self.listing.id}))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Убедитесь, что удаленное бронирование отображается
+        self.assertEqual(response.data['count'], 16)
 
 
 class TestUserBookingsListView(APITestCase):
@@ -225,3 +285,33 @@ class TestUserBookingsListView(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['results']), 1)  # Администратор видит только свои бронирования
         self.assertEqual(response.data['results'][0]['id'], admin_booking.id)
+
+        def test_user_cannot_see_deleted_bookings(self):
+            # Создаем удаленное бронирование
+            Booking.objects.create(
+                listing=self.listing,
+                user=self.user,
+                start_date=timezone.now() + timedelta(days=20),
+                end_date=timezone.now() + timedelta(days=25),
+                status=BookingStatusChoices.DELETED
+            )
+            self.client.force_authenticate(user=self.user)
+            response = self.client.get(reverse('user-bookings-list'))
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            # Убедитесь, что удаленное бронирование не отображается
+            self.assertEqual(response.data['count'], 15)  # Ожидается 15 активных бронирований
+
+        def test_admin_can_see_deleted_bookings_in_user_list(self):
+            # Создаем удаленное бронирование для администратора
+            Booking.objects.create(
+                listing=self.listing,
+                user=self.admin_user,
+                start_date=timezone.now() + timedelta(days=20),
+                end_date=timezone.now() + timedelta(days=25),
+                status=BookingStatusChoices.DELETED
+            )
+            self.client.force_authenticate(user=self.admin_user)
+            response = self.client.get(reverse('user-bookings-list'))
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            # Убедитесь, что удаленное бронирование отображается
+            self.assertEqual(response.data['count'], 1)

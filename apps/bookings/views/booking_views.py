@@ -19,7 +19,11 @@ class OwnerListingBookingsListView(generics.ListAPIView):
         user = self.request.user
         if user.is_staff:
             return Booking.objects.all().order_by('-created_at')
-        return Booking.objects.filter(listing__owner=user).order_by('-created_at')
+
+        # Владелец видит только бронирования, кроме удаленных
+        return Booking.objects.filter(
+            listing__owner=user
+        ).exclude(status=BookingStatusChoices.DELETED).order_by('-created_at')
 
 
 class ListingBookingsListView(generics.ListAPIView):
@@ -36,7 +40,13 @@ class ListingBookingsListView(generics.ListAPIView):
             raise PermissionDenied("You do not have permission to view bookings for this listing.")
 
         # Вернуть все бронирования для данного листинга
-        return Booking.objects.filter(listing=listing).order_by('-created_at')
+        if user.is_staff:
+            return Booking.objects.filter(listing=listing).order_by('-created_at')
+
+        # Владелец видит только бронирования, кроме удаленных
+        return Booking.objects.filter(
+            listing=listing
+        ).exclude(status=BookingStatusChoices.DELETED).order_by('-created_at')
 
 
 class UserBookingsListView(generics.ListAPIView):
@@ -45,7 +55,12 @@ class UserBookingsListView(generics.ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        return Booking.objects.filter(user=user).order_by('-created_at')
+        if user.is_staff:
+            # Администратор видит все свои бронирования, включая удаленные
+            return Booking.objects.filter(user=user).order_by('-created_at')
+
+        # Обычные пользователи видят только свои бронирования, исключая удаленные
+        return Booking.objects.filter(user=user).exclude(status=BookingStatusChoices.DELETED).order_by('-created_at')
 
 
 class BookingDetailView(generics.RetrieveAPIView):
@@ -54,7 +69,13 @@ class BookingDetailView(generics.RetrieveAPIView):
     lookup_field = 'id'
 
     def get_queryset(self):
-        return Booking.objects.all()
+        user = self.request.user
+        if user.is_staff:
+            # Администратор видит все бронирования, включая удаленные
+            return Booking.objects.all()
+
+        # Обычные пользователи и владельцы видят только бронирования, кроме удаленных
+        return Booking.objects.exclude(status=BookingStatusChoices.DELETED)
 
 
 class BookingCreateView(generics.CreateAPIView):
