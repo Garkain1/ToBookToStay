@@ -36,6 +36,3 @@ class BookingAdminForm(forms.ModelForm):
     class Meta:
         model = Booking
         fields = ('listing', 'user', 'start_date', 'end_date', 'total_price', 'status_choice', 'is_soft_deleted')
-        widgets = {
-            'description': forms.Textarea(attrs={'rows': 4}),
-        }
